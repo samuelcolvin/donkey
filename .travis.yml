@@ -1,0 +1,12 @@
+language: python
+cache: pip
+python:
+  - 3.5
+  - 3.6-dev
+install:
+  - make install
+script:
+  - make lint
+  - make test
+after_success:
+  - codecov
