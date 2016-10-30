@@ -1,0 +1,64 @@
+#! /usr/bin/env donkey
+install:
+- pip install -U pip
+- pip install -r requirements
+
+runserver:
+- ./manage.py runserver
+
+sass:
+  exe: webpack
+  args:
+  - ./entry.js
+  - bundle.js
+
+runserver-sass:
+ exe: makefile.yml
+ restart: true
+ commands:
+ - runserver
+ - sass
+
+reset-db:
+ executable: python
+ settings:
+   database: whatever
+   password: foobar
+ commands:
+ - from app.management import reset_db
+ - reset_db()
+
+test:
+- ./manage.py test
+
+lint:
+- flake8 app/
+
+testall:
+ executable: donkey  # or makefile.yml
+ commands:
+ - test
+ - lint
+
+.default: runserver
+
+.settings:
+  foo: bar
+
+.config:
+  settings: 
+    env_override: true
+    method: '"env-vars" | "arg" | "file"'
+    argname: --settings
+    format: 'json | yml'
+    filename: "/tmp/settings.json"
+  logging:
+    # eg. format, tee, save to file, syslog, sentry?
+    parallel: ...
+    serial: ...
+  multiline: true
+  parallel: false # whether commands are run concurrently assumes multiline false
+  sentinel: null # file(s?) to check before running command
+  watch: null # directories or file to watch and execute command on
+  interval: null # number command every x seconds
+  recover: false # whether to recover/restart after non zero exit code
