@@ -3,7 +3,11 @@ donkey
 
 |Build Status| |Coverage| |pypi| |license|
 
-Like make but for the 21st century.
+Like [make](http://helpmanual.io/man1/make/) but for the 21st century.
+
+TODO:
+* coloured logging
+* tests
 
 .. |Build Status| image:: https://travis-ci.org/samuelcolvin/donkey.svg?branch=master
    :target: https://travis-ci.org/samuelcolvin/donkey
@@ -11,5 +15,5 @@ Like make but for the 21st century.
    :target: https://codecov.io/gh/samuelcolvin/donkey
 .. |pypi| image:: https://img.shields.io/pypi/v/donkey.svg
    :target: https://pypi.python.org/pypi/donk
-.. |license| image:: https://img.shields.io/pypi/l/donkey.svg
+.. |license| image:: https://img.shields.io/pypi/l/donk.svg
    :target: https://github.com/samuelcolvin/donkey

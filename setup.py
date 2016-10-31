@@ -43,6 +43,7 @@ setup(
     install_requires=[
         'click>=6.6',
         'PyYAML>=3.12',
+        'trafaret>=0.7.5',
         'trafaret-config>=0.1.1',
         'watchdog>=0.8.3',
     ],

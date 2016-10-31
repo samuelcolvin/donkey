@@ -1,6 +1,6 @@
 import click
 from .logs import setup_logging
-from .main import execute
+from .main import execute, DonkeyError
 from .version import VERSION
 
 PARALLEL_HELP = (
@@ -22,7 +22,7 @@ DF_HELP = (
 @click.command()
 @click.version_option(VERSION, '-V', '--version', prog_name='donkey')
 @click.argument('commands', nargs=-1)
-@click.option('--parallel/--serial', 'parallel', default=False, help=PARALLEL_HELP)
+@click.option('--parallel/--serial', 'parallel', default=None, help=PARALLEL_HELP)
 @click.option('-a', '--args', help=ARGS_HELP)
 @click.option('-d', '--definition-file', type=click.Path(exists=True, dir_okay=False, file_okay=True), help=DF_HELP)
 @click.option('-v', '--verbose', is_flag=True)
@@ -39,5 +39,8 @@ def cli(*, verbose, **kwargs):
     which are looked for are "donkey.yml/yaml" or "makefile.yml/yaml".
     """
     setup_logging(verbose)
-    execute(**kwargs)
+    try:
+        execute(**kwargs)
+    except DonkeyError as e:
+        raise click.BadParameter(e) from e
 
