@@ -3,7 +3,7 @@ donkey
 
 |Build Status| |Coverage| |pypi| |license|
 
-Like [make](http://helpmanual.io/man1/make/) but for the 21st century.
+Like `make`_ but for the 21st century.
 
 TODO:
 * coloured logging
@@ -17,3 +17,4 @@ TODO:
    :target: https://pypi.python.org/pypi/donk
 .. |license| image:: https://img.shields.io/pypi/l/donk.svg
    :target: https://github.com/samuelcolvin/donkey
+.. _make: http://helpmanual.io/man1/make/

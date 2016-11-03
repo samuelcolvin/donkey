@@ -2,7 +2,6 @@ import asyncio
 import locale
 import logging
 import re
-import shlex
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -93,6 +92,10 @@ class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
         self.exit_future.set_result(True)
 
 
+def now():
+    return datetime.now()
+
+
 class CommandExecutor:
     def __init__(self, name, run_commands, *,
                  loop, settings=None, args=None, parallel=False, interpreter=None, script_mode=False):
@@ -127,7 +130,7 @@ class CommandExecutor:
 
     async def _run(self, display_name: str, args: Tuple[str, ...]) -> int:
         main_logger.info('Running "%s"...', display_name)
-        start = datetime.now()
+        start = now()
         exit_future = asyncio.Future(loop=self.loop)
 
         def protocol_factory():
@@ -138,7 +141,7 @@ class CommandExecutor:
         await exit_future
         return_code = transport.get_returncode()
         transport.close()
-        time_taken = (datetime.now() - start).total_seconds()
+        time_taken = (now() - start).total_seconds()
         main_logger.info('"%s" finished in %0.2fs, return code: %d', display_name, time_taken, return_code)
         return return_code
 
@@ -151,9 +154,9 @@ class CommandExecutor:
 def loop_context():
     if sys.platform == 'win32':
         loop = asyncio.ProactorEventLoop()
-        asyncio.set_event_loop(loop)
     else:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
     loop.close()
 

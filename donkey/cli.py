@@ -1,6 +1,7 @@
 import click
+
 from .logs import setup_logging
-from .main import execute, DonkeyError
+from .main import DonkeyError, execute
 from .version import VERSION
 
 PARALLEL_HELP = (
@@ -28,7 +29,7 @@ DF_HELP = (
 @click.option('-v', '--verbose', is_flag=True)
 def cli(*, verbose, **kwargs):
     """
-    Like "make" but for the 21st century.
+    Like make but for the 21st century.
 
     command(s) are run from the specified definition file or the "closest" definition file found.
     If no commands are passed the default (or first if no default is set) command is executed.
@@ -43,4 +44,3 @@ def cli(*, verbose, **kwargs):
         execute(**kwargs)
     except DonkeyError as e:
         raise click.BadParameter(e) from e
-

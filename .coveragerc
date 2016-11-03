@@ -1,0 +1,11 @@
+[run]
+source = donkey
+branch = True
+concurrency = multiprocessing
+
+[report]
+exclude_lines =
+    pragma: no cover
+
+    raise NotImplementedError
+    raise NotImplemented
