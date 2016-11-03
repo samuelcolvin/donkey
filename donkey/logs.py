@@ -1,48 +1,69 @@
 import logging
 import logging.config
+import re
 
 import click
 
-LOG_COLOURS = {
-    logging.DEBUG: 'white',
-    logging.INFO: 'green',
-    logging.WARN: 'yellow',
+MAIN_LOG_FORMAT = {
+    logging.DEBUG: {'fg': 'white', 'dim': True},
+    logging.INFO: {'fg': 'white', 'dim': True},
+    logging.WARN: {'fg': 'yellow', 'dim': True},
 }
 
 
 class MainHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
-        colour = LOG_COLOURS.get(record.levelno, 'red')
-        click.secho(log_entry, fg=colour)
+        if hasattr(record, 'symbol'):
+            symbol = click.style(record.symbol, fg=record.colour)
+            log_entry = '%s %s' % (log_entry, symbol)
+        click.secho(log_entry, **MAIN_LOG_FORMAT.get(record.levelno, {'fg': 'red'}))
 
 
-class DefaultHandler(logging.Handler):
+class CommandLogHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
-        kwargs = {}
-        # if record.levelno == logging.DEBUG:
-        #     kwargs['dim'] = True
-        # kwargs['fg'] = 'green'  # TODO
-        click.secho(log_entry, **kwargs)
+        m = re.match('^\d\d:\d\d:\d\d ', log_entry)
+        msg = click.style('%s %s' % (record.symbol, log_entry[m.end():]), fg=record.colour)
+        prefix = click.style(m.group(), fg='magenta')
+        click.echo(prefix + msg)
+
+SYMBOLS = ['●', '◆', '▼', '◼', '◖', '◗', '◯', '◇', '▽', '□']
+COLOURS = ['green', 'yellow', 'blue', 'magenta', 'cyan']
+FORMATS = []
+for symbol in SYMBOLS:
+    for colour in COLOURS:
+        FORMATS.append({'symbol': symbol, 'colour': colour})
+
+format_index = None
 
 
-def log_config(verbose: bool) -> dict:
+def reset_log_format():
+    global format_index
+    format_index = -1
+
+
+def get_log_format():
+    global format_index
+    format_index += 1
+    return FORMATS[format_index % len(FORMATS)]
+
+
+def setup_logging(verbose):
     """
-    Setup default config. for dictConfig.
+    Setup main logging
     :param verbose: level: DEBUG if True, INFO if False
-    :return: dict suitable for ``logging.config.dictConfig``
     """
     log_level = 'DEBUG' if verbose else 'INFO'
-    return {
+    log_config = {
         'version': 1,
         'disable_existing_loggers': True,
         'formatters': {
             'main': {
                 'format': '%(message)s',
             },
-            'default': {
-                'format': '%(asctime)s %(message)s',
+            'commands': {
+                'format': '%(asctime)s (%(fd)d) %(message)s',
                 'datefmt': '%H:%M:%S',
             },
         },
@@ -52,10 +73,10 @@ def log_config(verbose: bool) -> dict:
                 'class': 'donkey.logs.MainHandler',
                 'formatter': 'main'
             },
-            'default': {
-                'level': log_level,
-                'class': 'donkey.logs.DefaultHandler',
-                'formatter': 'default'
+            'commands': {
+                'level': 'INFO',
+                'class': 'donkey.logs.CommandLogHandler',
+                'formatter': 'commands'
             },
         },
         'loggers': {
@@ -64,15 +85,11 @@ def log_config(verbose: bool) -> dict:
                 'level': log_level,
                 'propagate': False,
             },
-            'donkey': {
-                'handlers': ['default'],
-                'level': log_level,
-                'foobar': 123,
+            'donkey.commands': {
+                'handlers': ['commands'],
+                'level': 'INFO',
+                'propagate': False,
             },
         },
     }
-
-
-def setup_logging(verbose):
-    config = log_config(verbose)
-    logging.config.dictConfig(config)
+    logging.config.dictConfig(log_config)

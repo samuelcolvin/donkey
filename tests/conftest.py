@@ -46,7 +46,7 @@ def normalise_log(s):
     return s
 
 
-LOGS = 'donkey.command', 'donkey.main'
+LOGS = 'donkey.commands', 'donkey.main'
 
 
 class StreamLog:

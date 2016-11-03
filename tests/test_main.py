@@ -32,10 +32,11 @@ foo:
 - echo"""
     })
     execute('foo', args='hello world')
-    assert caplog.normalised_log == """\
+    print(caplog.log)
+    assert """\
 donkey.main: Running "foo"...
-donkey.command: hello world
-donkey.main: "foo" finished in 0.0Xs, return code: 0\n"""
+donkey.commands: hello world
+donkey.main: "foo" finished in 0.0Xs, return code: 0\n""" == caplog.normalised_log
 
 
 async def test_argument_in_script_mode(tmpworkdir):

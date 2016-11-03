@@ -25,9 +25,9 @@ spam:
     log = caplog.normalised_log
     print(log)
     assert 'donkey.main: Running "foo: echo foo"...' in log
-    assert 'donkey.command: foo' in log
-    assert 'donkey.command: bar' in log
-    assert 'donkey.command: spam' in log
+    assert 'donkey.commands: foo' in log
+    assert 'donkey.commands: bar' in log
+    assert 'donkey.commands: spam' in log
 
 
 async def test_single_parallel(tmpworkdir):

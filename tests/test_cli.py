@@ -20,9 +20,9 @@ async def test_successful_command(tmpworkdir):
     result = runner.invoke(cli, ['foo'])
     assert result.exit_code == 0
     assert normalise_log(result.output) == """\
-Running "foo"...
-TI:XX:ME foo
-"foo" finished in 0.0Xs, return code: 0\n"""
+Running "foo"... ●
+TI:XX:ME ● (1) foo
+"foo" finished in 0.0Xs, return code: 0 ●\n"""
 
 
 async def test_no_file(tmpworkdir):

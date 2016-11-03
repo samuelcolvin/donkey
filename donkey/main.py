@@ -11,7 +11,9 @@ from typing import Tuple
 import trafaret as t
 from trafaret_config import ConfigError, read_and_validate
 
-logger = logging.getLogger('donkey.command')
+from .logs import get_log_format, reset_log_format
+
+command_logger = logging.getLogger('donkey.commands')
 main_logger = logging.getLogger('donkey.main')
 
 STD_FILE_NAMES = [
@@ -72,18 +74,19 @@ STRUCTURE.allow_extra(
 
 
 class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
-    STD_FILES = {
-        1: 'stdout',
-        2: 'stderr',
-    }
 
-    def __init__(self, exit_future):
+    def __init__(self, exit_future, log_format):
         self.exit_future = exit_future
+        self.log_format = log_format
 
     def pipe_data_received(self, fd, data):
         s = data.decode(locale.getpreferredencoding(False))
-        l = logger.info if fd == 1 else logger.warning
-        extra = {'stdfile': self.STD_FILES[fd]}
+        l = command_logger.info if fd == 1 else command_logger.warning
+        extra = {
+            'fd': fd,
+            'symbol': self.log_format['symbol'],
+            'colour': self.log_format['colour'],
+        }
         for line in s.split('\n'):
             if line:
                 l('%s', line, extra=extra)
@@ -129,12 +132,13 @@ class CommandExecutor:
             return coros
 
     async def _run(self, display_name: str, args: Tuple[str, ...]) -> int:
-        main_logger.info('Running "%s"...', display_name)
+        log_format = get_log_format()
+        main_logger.info('Running "%s"...', display_name, extra=log_format)
         start = now()
         exit_future = asyncio.Future(loop=self.loop)
 
         def protocol_factory():
-            return DonkeySubprocessProtocol(exit_future)
+            return DonkeySubprocessProtocol(exit_future, log_format)
 
         transport, _ = await self.loop.subprocess_exec(protocol_factory, *args)
 
@@ -142,7 +146,8 @@ class CommandExecutor:
         return_code = transport.get_returncode()
         transport.close()
         time_taken = (now() - start).total_seconds()
-        main_logger.info('"%s" finished in %0.2fs, return code: %d', display_name, time_taken, return_code)
+        main_logger.info('"%s" finished in %0.2fs, return code: %d',
+                         display_name, time_taken, return_code, extra=log_format)
         return return_code
 
     @staticmethod
@@ -170,6 +175,7 @@ async def run_coros(coros, parallel, *, loop):
 
 
 def execute(*commands: str, parallel: bool=None, args: str=None, definition_file: str=None):
+    reset_log_format()
     if definition_file:
         def_path = Path(definition_file).resolve()
     else:
