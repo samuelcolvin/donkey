@@ -36,8 +36,8 @@ def find_def_file(p=None):
             return def_path
     if p == p.parent:
         # got to /
-        raise DonkeyError('Unable to find #definition file with standard name {} in the current working '
-                          'directory or any parent directory'.format(' or '.join(r.pattern for r in STD_FILE_NAMES)))
+        raise DonkeyError('Unable to find definition file with standard name "donkey.yml" or "makefile.yml" in the '
+                          'current working directory or any parent directory')
     return find_def_file(p.parent)
 
 
@@ -188,7 +188,7 @@ def execute(*, commands: List[str], parallel: bool=None, args: List[str]=None, d
     to_run = []
     for c in commands:
         if c not in def_data:
-            raise DonkeyError('command "{}" not found in "{}", '
+            raise DonkeyError('Command "{}" not found in "{}", '
                               'options: {}'.format(c, def_path, ', '.join(def_data.keys())))
         to_run.append((c, def_data[c]))
 

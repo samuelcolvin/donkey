@@ -1,8 +1,13 @@
+import logging
+import sys
+
 import click
 
 from .logs import setup_logging
 from .main import DonkeyError, execute
 from .version import VERSION
+
+main_logger = logging.getLogger('donkey.main')
 
 PARALLEL_HELP = (
     '(default: serial) Whether to run multiple commands in parallel or serial, '
@@ -43,4 +48,5 @@ def cli(*, verbose, **kwargs):
     try:
         execute(**kwargs)
     except DonkeyError as e:
-        raise click.BadParameter(e) from e
+        main_logger.error('Error: %s', e)
+        sys.exit(2)
