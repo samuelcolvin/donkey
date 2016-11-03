@@ -10,7 +10,7 @@ with Path(__file__).parent.joinpath('README.rst').open() as f:
 version = SourceFileLoader('version', 'donkey/version.py').load_module()
 
 setup(
-    name='donkey',
+    name='donkey-make',
     version=str(version.VERSION),
     description='Like make but for the 21st century.',
     long_description=long_description,

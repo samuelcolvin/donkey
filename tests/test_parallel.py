@@ -21,7 +21,7 @@ spam:
     start = datetime.now()
     execute('foo', 'bar', 'spam', parallel=True)
     diff = (datetime.now() - start).total_seconds()
-    assert 0.1 < diff < 0.12
+    assert 0.1 < diff < 0.15
     log = caplog.normalised_log
     print(log)
     assert 'donkey.main: Running "foo: echo foo"...' in log
@@ -45,5 +45,5 @@ foo:
     start = datetime.now()
     execute('foo', parallel=True)
     diff = (datetime.now() - start).total_seconds()
-    assert 0.1 < diff < 0.12
+    assert 0.1 < diff < 0.15
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
