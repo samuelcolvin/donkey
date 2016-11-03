@@ -19,12 +19,12 @@ lint:
 test:
 	py.test --cov=donkey --isort && coverage combine
 
-.PHONY: .test-build-cov
-.test-build-cov:
+.PHONY: testcov
+testcov:
 	py.test --cov=donkey && (echo "building coverage html"; coverage combine; coverage html)
 
 .PHONY: all
-all: .test-build-cov lint
+all: testcov lint
 
 .PHONY: clean
 clean:

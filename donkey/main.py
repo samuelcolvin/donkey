@@ -6,12 +6,12 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 import trafaret as t
-from trafaret_config import read_and_validate
+from trafaret_config import ConfigError, read_and_validate
 
-logger = logging.getLogger('donkey')
+logger = logging.getLogger('donkey.command')
 main_logger = logging.getLogger('donkey.main')
 
 STD_FILE_NAMES = [
@@ -121,7 +121,7 @@ class CommandExecutor:
             if len(self.subprocess_args_list) == 1:
                 display_name = self.name
             else:
-                display_name = '{}: {}'.format(self.name, ' '.join(args))
+                display_name = '{}: {}'.format(self.name, args[-1])
             coros.append(self._run(display_name, args))
         if self.parallel:
             return [asyncio.gather(*coros, loop=self.loop)]
@@ -152,7 +152,7 @@ class CommandExecutor:
 
 @contextmanager
 def loop_context():
-    if sys.platform == 'win32':
+    if sys.platform == 'win32':  # pragma: no cover
         loop = asyncio.ProactorEventLoop()
     else:
         loop = asyncio.new_event_loop()
@@ -169,12 +169,15 @@ async def run_coros(coros, parallel, *, loop):
             await coro
 
 
-def execute(*, commands: List[str], parallel: bool=None, args: List[str]=None, definition_file: str=None):
+def execute(*commands: str, parallel: bool=None, args: str=None, definition_file: str=None):
     if definition_file:
         def_path = Path(definition_file).resolve()
     else:
         def_path = find_def_file()
-    def_data = read_and_validate(str(def_path), STRUCTURE)
+    try:
+        def_data = read_and_validate(str(def_path), STRUCTURE)
+    except ConfigError as e:
+        raise DonkeyError('Invalid definition file, {}'.format(e))
     default_command = def_data.pop('.default', None)
     if not commands:
         if not default_command:
@@ -203,7 +206,7 @@ def execute(*, commands: List[str], parallel: bool=None, args: List[str]=None, d
                 loop=loop,
                 settings=_settings,
                 args=args,
-                parallel=c.get('parallel', parallel),
+                parallel=c.get('parallel', False),  # TODO add config option
                 interpreter=c.get('interpreter') or config.get('interpreter'),
                 script_mode=c.get('script_mode', config.get('script_mode', False)),
             )

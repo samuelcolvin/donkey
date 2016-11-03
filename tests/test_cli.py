@@ -1,10 +1,8 @@
-import re
-
 from click.testing import CliRunner
 
 from donkey.cli import cli
 
-from .conftest import mktree
+from .conftest import mktree, normalise_log
 
 
 def test_cli_help():
@@ -14,12 +12,6 @@ def test_cli_help():
     assert 'Like make but for the 21st century.' in result.output
 
 
-def _normalise_log(s):
-    s = re.sub('\d\d:\d\d:\d\d', 'TI:XX:ME', s)
-    s = re.sub('0.0\ds', '0.0Xs', s)
-    return s
-
-
 async def test_successful_command(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': 'foo:\n- echo foo\n',
@@ -27,7 +19,7 @@ async def test_successful_command(tmpworkdir):
     runner = CliRunner()
     result = runner.invoke(cli, ['foo'])
     assert result.exit_code == 0
-    assert _normalise_log(result.output) == """\
+    assert normalise_log(result.output) == """\
 Running "foo"...
 TI:XX:ME foo
 "foo" finished in 0.0Xs, return code: 0\n"""

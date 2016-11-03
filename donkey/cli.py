@@ -23,6 +23,7 @@ DF_HELP = (
 # extra options to add in future
 # watch/interval
 # recover
+# run parallel
 
 
 @click.command()
@@ -32,7 +33,7 @@ DF_HELP = (
 @click.option('-a', '--args', help=ARGS_HELP)
 @click.option('-d', '--definition-file', type=click.Path(exists=True, dir_okay=False, file_okay=True), help=DF_HELP)
 @click.option('-v', '--verbose', is_flag=True)
-def cli(*, verbose, **kwargs):
+def cli(*, commands, verbose, **kwargs):
     """
     Like make but for the 21st century.
 
@@ -46,7 +47,7 @@ def cli(*, verbose, **kwargs):
     """
     setup_logging(verbose)
     try:
-        execute(**kwargs)
+        execute(*commands, **kwargs)
     except DonkeyError as e:
         main_logger.error('Error: %s', e)
         sys.exit(2)

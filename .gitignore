@@ -11,3 +11,4 @@ htmlcov/
 /dist
 *.egg-info
 docs/_build/
+donkey.yml

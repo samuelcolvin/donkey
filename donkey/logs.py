@@ -21,8 +21,8 @@ class DefaultHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
         kwargs = {}
-        if record.levelno == logging.DEBUG:
-            kwargs['dim'] = True
+        # if record.levelno == logging.DEBUG:
+        #     kwargs['dim'] = True
         # kwargs['fg'] = 'green'  # TODO
         click.secho(log_entry, **kwargs)
 

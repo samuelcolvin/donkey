@@ -13,7 +13,7 @@ TODO:
    :target: https://travis-ci.org/samuelcolvin/donkey
 .. |Coverage| image:: https://codecov.io/gh/samuelcolvin/donkey/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/samuelcolvin/donkey
-.. |pypi| image:: https://img.shields.io/pypi/v/donkey.svg
+.. |pypi| image:: https://img.shields.io/pypi/v/donk.svg
    :target: https://pypi.python.org/pypi/donk
 .. |license| image:: https://img.shields.io/pypi/l/donk.svg
    :target: https://github.com/samuelcolvin/donkey
