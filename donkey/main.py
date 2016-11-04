@@ -7,6 +7,7 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
+from subprocess import PIPE
 from typing import Tuple
 
 import trafaret as t
@@ -79,25 +80,36 @@ STRUCTURE.allow_extra(
 
 
 class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
-
     def __init__(self, exit_future, log_format):
         self.exit_future = exit_future
         self.log_format = log_format
+        self.has_trailing_nl = True
 
     def pipe_data_received(self, fd, data):
-        s = data.decode(locale.getpreferredencoding(False))
-        l = command_logger.info if fd == 1 else command_logger.warning
-        extra = {
-            'fd': fd,
-            'symbol': self.log_format['symbol'],
-            'colour': self.log_format['colour'],
-        }
-        for line in s.split('\n'):
-            if line:
+        # try:
+            s = data.decode(locale.getpreferredencoding(False))
+            l = command_logger.info if fd == 1 else command_logger.warning
+            extra = {
+                'fd': fd,
+                'symbol': self.log_format['symbol'],
+                'colour': self.log_format['colour'],
+                'nl': True,
+            }
+            *lines, last = s.split('\n')
+            for line in lines:
+                self.has_trailing_nl = True
                 l('%s', line, extra=extra)
+            if last:
+                self.has_trailing_nl = False
+                extra['nl'] = False
+                l('%s', last, extra=extra)
+        # except Exception as e:
+        #     self.exit_future.set_exception(e)
 
     def process_exited(self):
         self.exit_future.set_result(True)
+        if not self.has_trailing_nl:
+            command_logger.info('<nl>')
 
 
 def now():
@@ -154,7 +166,15 @@ class CommandExecutor:
         def protocol_factory():
             return DonkeySubprocessProtocol(exit_future, log_format)
 
-        transport, _ = await self.loop.subprocess_exec(protocol_factory, *args)
+        # pytest breaks stdin intentionally, thus we check it's working because calling subprocess_exec
+        try:
+            sys.stdin.fileno()
+        except ValueError:
+            stdin = PIPE
+        else:  # pragma: no cover
+            # sadly no sane way to test this case
+            stdin = sys.stdin
+        transport, _ = await self.loop.subprocess_exec(protocol_factory, *args, stdin=stdin)
 
         await exit_future
         return_code = transport.get_returncode()

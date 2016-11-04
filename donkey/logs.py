@@ -23,6 +23,8 @@ class MainHandler(logging.Handler):
 
 class CommandLogHandler(logging.Handler):
     def emit(self, record):
+        if record.getMessage() == '<nl>':
+            click.echo('')
         log_entry = self.format(record)
         m = re.match('^.*?:\d\d ', log_entry)
         symbol = getattr(record, 'symbol')
@@ -32,7 +34,7 @@ class CommandLogHandler(logging.Handler):
             msg = log_entry[m.end():]
         msg = click.style(msg, fg=record.colour)
         prefix = click.style(m.group(), fg='magenta')
-        click.echo(prefix + msg)
+        click.echo(prefix + msg, nl=record.nl)
 
 SYMBOLS = ['●', '◆', '▼', '◼', '◖', '◗', '◯', '◇', '▽', '□']
 COLOURS = ['green', 'cyan', 'blue', 'yellow']

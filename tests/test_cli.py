@@ -20,6 +20,8 @@ bar:
 - echo bar
 to-stderr:
 - echo "this goes to standard error" >&2
+no-newline:
+  - printf "hello"
 fails:
   interpreter: python
   script: true
@@ -31,7 +33,7 @@ fails:
 """}
 
 
-async def test_single_command(tmpworkdir):
+def test_single_command(tmpworkdir):
     mktree(tmpworkdir, files)
     runner = CliRunner()
     result = runner.invoke(cli, ['foo'])
@@ -42,7 +44,7 @@ TI:XX:ME 1: foo
 "foo" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
 
-async def test_stderr(tmpworkdir):
+def test_stderr(tmpworkdir):
     mktree(tmpworkdir, files)
     runner = CliRunner()
     result = runner.invoke(cli, ['to-stderr'])
@@ -53,7 +55,18 @@ TI:XX:ME 2: this goes to standard error
 "to-stderr" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
 
-async def test_multiple_commands(tmpworkdir):
+def test_no_newline(tmpworkdir):
+    mktree(tmpworkdir, files)
+    runner = CliRunner()
+    result = runner.invoke(cli, ['no-newline'])
+    assert result.exit_code == 0
+    assert """\
+Running "no-newline"...
+TI:XX:ME 1: hello
+"no-newline" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+
+
+def test_multiple_commands(tmpworkdir):
     mktree(tmpworkdir, files)
     runner = CliRunner()
     result = runner.invoke(cli, ['foo', 'bar'])
@@ -67,7 +80,7 @@ TI:XX:ME ● 1: bar
 "bar" finished in 0.0Xs, return code: 0 ●\n""" == normalise_log(result.output)
 
 
-async def test_no_file(tmpworkdir):
+def test_no_file(tmpworkdir):
     runner = CliRunner()
     result = runner.invoke(cli)
     assert result.exit_code == 2
@@ -75,7 +88,7 @@ async def test_no_file(tmpworkdir):
                              'in the current working directory or any parent directory\n')
 
 
-async def test_failed_command(tmpworkdir):
+def test_failed_command(tmpworkdir):
     mktree(tmpworkdir, files)
     runner = CliRunner()
     result = runner.invoke(cli, ['fails'])

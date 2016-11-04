@@ -48,4 +48,4 @@ foo:
     diff = (datetime.now() - start).total_seconds()
     assert 0.1 < diff < 0.15
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
-    assert 'donkey.commands: foobar ●\n' == caplog.normalised_log
+    assert caplog.normalised_log.startswith('donkey.commands: foobar')
