@@ -40,7 +40,7 @@ def test_single_command(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 TI:XX:ME 1: foo
-"foo" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+"foo" finished in 0.0Xs, return codes: 0\n""" == normalise_log(result.output)
 
 
 def test_stderr(tmpworkdir):
@@ -50,7 +50,7 @@ def test_stderr(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 TI:XX:ME 2: this goes to standard error
-"to-stderr" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+"to-stderr" finished in 0.0Xs, return codes: 0\n""" == normalise_log(result.output)
 
 
 def test_no_newline(tmpworkdir):
@@ -60,7 +60,7 @@ def test_no_newline(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 TI:XX:ME 1: hello
-"no-newline" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+"no-newline" finished in 0.0Xs, return codes: 0\n""" == normalise_log(result.output)
 
 
 def test_multiple_commands(tmpworkdir):
@@ -70,9 +70,9 @@ def test_multiple_commands(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 TI:XX:ME ● 1: foo
-"foo" finished in 0.0Xs, return code: 0 ●
+"foo" finished in 0.0Xs, return codes: 0 ●
 TI:XX:ME ● 1: bar
-"bar" finished in 0.0Xs, return code: 0 ●\n""" == normalise_log(result.output)
+"bar" finished in 0.0Xs, return codes: 0 ●\n""" == normalise_log(result.output)
 
 
 def test_no_file(tmpworkdir):
@@ -91,7 +91,7 @@ def test_failed_command(tmpworkdir):
     print(result.output)
     assert """\
 TI:XX:ME 1: hello
-"fails" finished in 0.XXs, return code: 123
+"fails" finished in 0.XXs, return codes: 123
 Error: commands failed, return codes: 123\n""" == normalise_log(result.output, True)
 
 
@@ -114,4 +114,4 @@ print-dots:
     assert result.exit_code == 0
     assert """\
 TI:XX:ME 1: .....
-"print-dots" finished in 0.XXs, return code: 0\n""" == normalise_log(result.output, True)
+"print-dots" finished in 0.XXs, return codes: 0\n""" == normalise_log(result.output, True)

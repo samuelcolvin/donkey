@@ -37,7 +37,7 @@ foo:
     print(caplog.log)
     assert """\
 donkey.commands: hello world
-donkey.main: "foo" finished in 0.0Xs, return code: 0\n""" == caplog.normalised_log
+donkey.main: "foo" finished in 0.0Xs, return codes: 0\n""" == caplog.normalised_log
 
 
 async def test_argument_in_script_mode(tmpworkdir):
@@ -163,3 +163,31 @@ async def test_logging_error(tmpworkdir):
         with pytest.raises(RuntimeError) as excinfo:
             execute('foo')
         assert excinfo.value == error
+
+
+async def test_break_on_fail(tmpworkdir):
+    mktree(tmpworkdir, {
+        'makefile.yml': """
+foo:
+- exit 1
+- "echo foovalue > foo.txt"
+    """,
+    })
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('foo', 'foo')
+    assert excinfo.value.args == ('commands failed, return codes: 1', 1)
+    assert not tmpworkdir.join('foo.txt').exists()
+
+
+async def test_break_on_fail_after(tmpworkdir):
+    mktree(tmpworkdir, {
+        'makefile.yml': """
+foo:
+- "echo foovalue > foo.txt"
+- exit 1
+    """,
+    })
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('foo', 'foo')
+    assert excinfo.value.args == ('commands failed, return codes: 0, 1', 1)
+    assert tmpworkdir.join('foo.txt').exists()

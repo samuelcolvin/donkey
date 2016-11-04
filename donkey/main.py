@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from subprocess import PIPE
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 import trafaret as t
 from trafaret_config import ConfigError, read_and_validate
@@ -147,33 +147,45 @@ class CommandExecutor:
         self.settings = settings
         self.parallel = parallel
 
+    @property
     def command_count(self):
-        return len(self.subprocess_args_list)
+        return len(self.subprocess_args_list) if self.parallel else 1
 
     async def execute(self, track_multiple) -> list:
-        coros = []
-        for args in self.subprocess_args_list:
-            if len(self.subprocess_args_list) == 1:
-                display_name = self.name
-            else:
-                display_name = '{}: {}'.format(self.name, args[-1])
-            coros.append(self._run(display_name, args, track_multiple))
+        if self.command_count == 1:
+            return await self._run_multiple(self.subprocess_args_list, self.name, track_multiple)
 
-        if self.parallel:
-            results = await asyncio.gather(*coros, loop=self.loop)
         else:
-            results = []
-            for coro in coros:
-                results.append(await coro)
-        return results
+            coros = [
+                self._run_multiple([args], '{}: {}'.format(self.name, args[-1]), track_multiple)
+                for args in self.subprocess_args_list
+            ]
+            result = await asyncio.gather(*coros, loop=self.loop)
+            return [r[0] for r in result]
 
-    async def _run(self, display_name: str, args: Tuple[str, ...], track_multiple: bool) -> int:
+    async def _run_multiple(self, args_list: List[Tuple[str, ...]], display_name: str, track_multiple: bool) -> int:
         if track_multiple:
             log_format = get_log_format()
         else:
             log_format = {'symbol': '', 'colour': None}
         main_logger.debug('Running "%s"...', display_name, extra=log_format)
+
         start = now()
+        return_codes = []
+        for args in args_list:
+            rt = await self._run(args, log_format)
+            return_codes.append(rt)
+            if rt:
+                break
+        time_taken = (now() - start).total_seconds()
+        # tiny gap generally improves the order of log output without being long enough for the user to noticing
+        await asyncio.sleep(0.02)
+
+        main_logger.info('"%s" finished in %0.2fs, return codes: %s', display_name, time_taken,
+                         ', '.join(map(str, return_codes)), extra=log_format)
+        return return_codes
+
+    async def _run(self, args: Tuple[str, ...], log_format: Dict[str, Any]):
         exit_future = asyncio.Future(loop=self.loop)
 
         def protocol_factory():
@@ -192,10 +204,6 @@ class CommandExecutor:
         await exit_future
         return_code = transport.get_returncode()
         transport.close()
-        time_taken = (now() - start).total_seconds()
-        await asyncio.sleep(0.02)
-        main_logger.info('"%s" finished in %0.2fs, return code: %d', display_name, time_taken, return_code,
-                         extra=log_format)
         return return_code
 
     @staticmethod
@@ -215,7 +223,7 @@ def loop_context():
 
 
 async def run_coros(executors, parallel, *, loop):
-    track_multiple = sum(ex.command_count() for ex in executors) > 1
+    track_multiple = sum(ex.command_count for ex in executors) > 1
     coros = [ex.execute(track_multiple) for ex in executors]
     if parallel:
         return_code_sets = await asyncio.gather(*coros, loop=loop)
