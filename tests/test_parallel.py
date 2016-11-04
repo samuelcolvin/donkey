@@ -21,7 +21,7 @@ spam:
     start = datetime.now()
     execute('foo', 'bar', 'spam', parallel=True)
     diff = (datetime.now() - start).total_seconds()
-    assert 0.1 < diff < 0.15
+    assert 0.1 < diff < 0.18
     log = caplog.normalised_log
     assert 'donkey.commands: foo' in log
     assert 'donkey.commands: bar' in log

@@ -193,8 +193,9 @@ class CommandExecutor:
         return_code = transport.get_returncode()
         transport.close()
         time_taken = (now() - start).total_seconds()
-        main_logger.info('"%s" finished in %0.2fs, return code: %d',
-                         display_name, time_taken, return_code, extra=log_format)
+        await asyncio.sleep(0.02)
+        main_logger.info('"%s" finished in %0.2fs, return code: %d', display_name, time_taken, return_code,
+                         extra=log_format)
         return return_code
 
     @staticmethod
