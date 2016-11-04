@@ -18,6 +18,8 @@ foo:
 - echo foo
 bar:
 - echo bar
+to-stderr:
+- echo "this goes to standard error" >&2
 fails:
   interpreter: python
   script: true
@@ -36,8 +38,19 @@ async def test_single_command(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 Running "foo"...
-TI:XX:ME (1) foo
+TI:XX:ME 1: foo
 "foo" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+
+
+async def test_stderr(tmpworkdir):
+    mktree(tmpworkdir, files)
+    runner = CliRunner()
+    result = runner.invoke(cli, ['to-stderr'])
+    assert result.exit_code == 0
+    assert """\
+Running "to-stderr"...
+TI:XX:ME 2: this goes to standard error
+"to-stderr" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
 
 async def test_multiple_commands(tmpworkdir):
@@ -47,10 +60,10 @@ async def test_multiple_commands(tmpworkdir):
     assert result.exit_code == 0
     assert """\
 Running "foo"... ●
-TI:XX:ME ● (1) foo
+TI:XX:ME ● 1: foo
 "foo" finished in 0.0Xs, return code: 0 ●
 Running "bar"... ●
-TI:XX:ME ● (1) bar
+TI:XX:ME ● 1: bar
 "bar" finished in 0.0Xs, return code: 0 ●\n""" == normalise_log(result.output)
 
 
@@ -70,6 +83,6 @@ async def test_failed_command(tmpworkdir):
     print(result.output)
     assert """\
 Running "fails"...
-TI:XX:ME (1) hello
+TI:XX:ME 1: hello
 "fails" finished in 0.XXs, return code: 123
 Error: commands failed, return codes: 123\n""" == normalise_log(result.output, True)

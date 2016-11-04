@@ -24,7 +24,7 @@ class MainHandler(logging.Handler):
 class CommandLogHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
-        m = re.match('^\d\d:\d\d:\d\d ', log_entry)
+        m = re.match('^.*?:\d\d ', log_entry)
         symbol = getattr(record, 'symbol')
         if symbol:
             msg = '%s %s' % (record.symbol, log_entry[m.end():])
@@ -69,7 +69,7 @@ def setup_logging(verbose):
                 'format': '%(message)s',
             },
             'commands': {
-                'format': '%(asctime)s (%(fd)d) %(message)s',
+                'format': '%(asctime)s %(fd)d: %(message)s',
                 'datefmt': '%H:%M:%S',
             },
         },

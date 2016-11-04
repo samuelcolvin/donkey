@@ -30,7 +30,7 @@ spam:
     assert 'donkey.commands: spam' in log
 
 
-async def test_single_parallel(tmpworkdir):
+async def test_single_parallel(tmpworkdir, caplog):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -39,11 +39,13 @@ foo:
   - sleep 0.1
   - sleep 0.1
   - sleep 0.1
+  - echo foobar
   - "echo foovalue > foo.txt"
-    """,
-    })
+    """})
+    caplog.set_loggers('donkey.commands', fmt='%(name)s: %(message)s %(symbol)s')
     start = datetime.now()
     execute('foo', parallel=True)
     diff = (datetime.now() - start).total_seconds()
     assert 0.1 < diff < 0.15
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
+    assert 'donkey.commands: foobar ●\n' == caplog.normalised_log

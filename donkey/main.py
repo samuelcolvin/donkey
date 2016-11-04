@@ -124,7 +124,7 @@ class CommandExecutor:
         self.parallel = parallel
 
     def command_count(self):
-        return 1 if self.parallel else len(self.subprocess_args_list)
+        return len(self.subprocess_args_list)
 
     async def execute(self, track_multiple) -> list:
         coros = []
