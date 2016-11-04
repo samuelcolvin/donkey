@@ -118,21 +118,26 @@ class CommandExecutor:
         self.settings = settings
         self.parallel = parallel
 
-    def create_coros(self) -> list:
+    def command_count(self):
+        return 1 if self.parallel else len(self.subprocess_args_list)
+
+    def create_coros(self, track_multiple) -> list:
         coros = []
         for args in self.subprocess_args_list:
             if len(self.subprocess_args_list) == 1:
                 display_name = self.name
             else:
                 display_name = '{}: {}'.format(self.name, args[-1])
-            coros.append(self._run(display_name, args))
+            coros.append(self._run(display_name, args, track_multiple))
         if self.parallel:
             return [asyncio.gather(*coros, loop=self.loop)]
         else:
             return coros
 
-    async def _run(self, display_name: str, args: Tuple[str, ...]) -> int:
+    async def _run(self, display_name: str, args: Tuple[str, ...], track_multiple: bool) -> int:
         log_format = get_log_format()
+        if not track_multiple:
+            log_format['symbol'] = ''
         main_logger.info('Running "%s"...', display_name, extra=log_format)
         start = now()
         exit_future = asyncio.Future(loop=self.loop)
@@ -202,11 +207,11 @@ def execute(*commands: str, parallel: bool=None, args: str=None, definition_file
         to_run.append((c, def_data[c]))
 
     with loop_context() as loop:
-        coros = []
+        executors = []
         for name, c in to_run:
             _settings = settings.copy()
             _settings.update(c.get('settings', {}))  # TODO this should be recursive
-            command_executor = CommandExecutor(
+            executors.append(CommandExecutor(
                 name,
                 c['run'],
                 loop=loop,
@@ -215,7 +220,10 @@ def execute(*commands: str, parallel: bool=None, args: str=None, definition_file
                 parallel=c.get('parallel', False),  # TODO add config option
                 interpreter=c.get('interpreter') or config.get('interpreter'),
                 script_mode=c.get('script_mode', config.get('script_mode', False)),
-            )
-            coros.extend(command_executor.create_coros())
+            ))
 
+        track_multiple = sum(ex.command_count() for ex in executors) > 1
+        coros = []
+        for command_executor in executors:
+            coros.extend(command_executor.create_coros(track_multiple))
         loop.run_until_complete(run_coros(coros, parallel, loop=loop))

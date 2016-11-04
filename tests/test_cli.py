@@ -12,17 +12,38 @@ def test_cli_help():
     assert 'Like make but for the 21st century.' in result.output
 
 
-async def test_successful_command(tmpworkdir):
-    mktree(tmpworkdir, {
-        'makefile.yml': 'foo:\n- echo foo\n',
-    })
+files = {
+    'makefile.yml': """
+foo:
+- echo foo
+bar:
+- echo bar
+"""}
+
+
+async def test_single_command(tmpworkdir):
+    mktree(tmpworkdir, files)
     runner = CliRunner()
     result = runner.invoke(cli, ['foo'])
     assert result.exit_code == 0
-    assert normalise_log(result.output) == """\
+    assert """\
+Running "foo"...
+TI:XX:ME (1) foo
+"foo" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
+
+
+async def test_multiple_commands(tmpworkdir):
+    mktree(tmpworkdir, files)
+    runner = CliRunner()
+    result = runner.invoke(cli, ['foo', 'bar'])
+    assert result.exit_code == 0
+    assert """\
 Running "foo"... ●
 TI:XX:ME ● (1) foo
-"foo" finished in 0.0Xs, return code: 0 ●\n"""
+"foo" finished in 0.0Xs, return code: 0 ●
+Running "bar"... ●
+TI:XX:ME ● (1) bar
+"bar" finished in 0.0Xs, return code: 0 ●\n""" == normalise_log(result.output)
 
 
 async def test_no_file(tmpworkdir):

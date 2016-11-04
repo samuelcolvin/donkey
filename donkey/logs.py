@@ -14,22 +14,28 @@ MAIN_LOG_FORMAT = {
 class MainHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
-        if hasattr(record, 'symbol'):
-            symbol = click.style(record.symbol, fg=record.colour)
-            log_entry = '%s %s' % (log_entry, symbol)
-        click.secho(log_entry, **MAIN_LOG_FORMAT.get(record.levelno, {'fg': 'red'}))
+        symbol = getattr(record, 'symbol', '')
+        if symbol:
+            symbol = ' ' + click.style(symbol, fg=record.colour)
+        msg = click.style(log_entry, **MAIN_LOG_FORMAT.get(record.levelno, {'fg': 'red'}))
+        click.secho(msg + symbol)
 
 
 class CommandLogHandler(logging.Handler):
     def emit(self, record):
         log_entry = self.format(record)
         m = re.match('^\d\d:\d\d:\d\d ', log_entry)
-        msg = click.style('%s %s' % (record.symbol, log_entry[m.end():]), fg=record.colour)
+        symbol = getattr(record, 'symbol')
+        if symbol:
+            msg = '%s %s' % (record.symbol, log_entry[m.end():])
+        else:
+            msg = log_entry[m.end():]
+        msg = click.style(msg, fg=record.colour)
         prefix = click.style(m.group(), fg='magenta')
         click.echo(prefix + msg)
 
 SYMBOLS = ['●', '◆', '▼', '◼', '◖', '◗', '◯', '◇', '▽', '□']
-COLOURS = ['green', 'yellow', 'blue', 'magenta', 'cyan']
+COLOURS = ['green', 'cyan', 'blue', 'yellow']
 FORMATS = []
 for symbol in SYMBOLS:
     for colour in COLOURS:
@@ -46,7 +52,7 @@ def reset_log_format():
 def get_log_format():
     global format_index
     format_index += 1
-    return FORMATS[format_index % len(FORMATS)]
+    return dict(FORMATS[format_index % len(FORMATS)])
 
 
 def setup_logging(verbose):

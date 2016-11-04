@@ -6,8 +6,13 @@ donkey
 Like `make`_ but for the 21st century.
 
 TODO:
-* coloured logging
-* tests
+
+* combined commands - use "requires:" list, run could then be none
+* settings
+* check command
+* watch, interval
+* other interpretters eg. python
+* mix up symbols
 
 .. |Build Status| image:: https://travis-ci.org/samuelcolvin/donkey.svg?branch=master
    :target: https://travis-ci.org/samuelcolvin/donkey
