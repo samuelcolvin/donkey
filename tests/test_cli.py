@@ -39,7 +39,6 @@ def test_single_command(tmpworkdir):
     result = runner.invoke(cli, ['foo'])
     assert result.exit_code == 0
     assert """\
-Running "foo"...
 TI:XX:ME 1: foo
 "foo" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
@@ -50,7 +49,6 @@ def test_stderr(tmpworkdir):
     result = runner.invoke(cli, ['to-stderr'])
     assert result.exit_code == 0
     assert """\
-Running "to-stderr"...
 TI:XX:ME 2: this goes to standard error
 "to-stderr" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
@@ -61,7 +59,6 @@ def test_no_newline(tmpworkdir):
     result = runner.invoke(cli, ['no-newline'])
     assert result.exit_code == 0
     assert """\
-Running "no-newline"...
 TI:XX:ME 1: hello
 "no-newline" finished in 0.0Xs, return code: 0\n""" == normalise_log(result.output)
 
@@ -72,10 +69,8 @@ def test_multiple_commands(tmpworkdir):
     result = runner.invoke(cli, ['foo', 'bar'])
     assert result.exit_code == 0
     assert """\
-Running "foo"... ●
 TI:XX:ME ● 1: foo
 "foo" finished in 0.0Xs, return code: 0 ●
-Running "bar"... ●
 TI:XX:ME ● 1: bar
 "bar" finished in 0.0Xs, return code: 0 ●\n""" == normalise_log(result.output)
 
@@ -95,7 +90,6 @@ def test_failed_command(tmpworkdir):
     assert result.exit_code == 123
     print(result.output)
     assert """\
-Running "fails"...
 TI:XX:ME 1: hello
 "fails" finished in 0.XXs, return code: 123
 Error: commands failed, return codes: 123\n""" == normalise_log(result.output, True)
@@ -119,6 +113,5 @@ print-dots:
     print(result.output)
     assert result.exit_code == 0
     assert """\
-Running "print-dots"...
 TI:XX:ME 1: .....
 "print-dots" finished in 0.XXs, return code: 0\n""" == normalise_log(result.output, True)

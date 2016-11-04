@@ -36,7 +36,6 @@ foo:
     execute('foo', args='hello world')
     print(caplog.log)
     assert """\
-donkey.main: Running "foo"...
 donkey.commands: hello world
 donkey.main: "foo" finished in 0.0Xs, return code: 0\n""" == caplog.normalised_log
 

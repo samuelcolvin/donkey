@@ -168,10 +168,11 @@ class CommandExecutor:
         return results
 
     async def _run(self, display_name: str, args: Tuple[str, ...], track_multiple: bool) -> int:
-        log_format = get_log_format()
-        if not track_multiple:
-            log_format['symbol'] = ''
-        main_logger.info('Running "%s"...', display_name, extra=log_format)
+        if track_multiple:
+            log_format = get_log_format()
+        else:
+            log_format = {'symbol': '', 'colour': None}
+        main_logger.debug('Running "%s"...', display_name, extra=log_format)
         start = now()
         exit_future = asyncio.Future(loop=self.loop)
 

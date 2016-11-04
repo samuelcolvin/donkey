@@ -23,8 +23,6 @@ spam:
     diff = (datetime.now() - start).total_seconds()
     assert 0.1 < diff < 0.15
     log = caplog.normalised_log
-    print(log)
-    assert 'donkey.main: Running "foo: echo foo"...' in log
     assert 'donkey.commands: foo' in log
     assert 'donkey.commands: bar' in log
     assert 'donkey.commands: spam' in log
