@@ -40,9 +40,12 @@ def mktree(lp: LocalPath, d):
             _lp.write(content)
 
 
-def normalise_log(s):
+def normalise_log(s, long=False):
     s = re.sub('\d\d:\d\d:\d\d', 'TI:XX:ME', s)
-    s = re.sub('0.0\ds', '0.0Xs', s)
+    if long:
+        s = re.sub('0.\d\ds', '0.XXs', s)
+    else:
+        s = re.sub('0.0\ds', '0.0Xs', s)
     return s
 
 

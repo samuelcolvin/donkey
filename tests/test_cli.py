@@ -71,5 +71,5 @@ async def test_failed_command(tmpworkdir):
     assert """\
 Running "fails"...
 TI:XX:ME (1) hello
-"fails" finished in 0.0Xs, return code: 123
-Error: commands failed, return codes: 123\n""" == normalise_log(result.output)
+"fails" finished in 0.XXs, return code: 123
+Error: commands failed, return codes: 123\n""" == normalise_log(result.output, True)
