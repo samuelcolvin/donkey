@@ -24,7 +24,14 @@ class MainHandler(logging.Handler):
 class CommandLogHandler(logging.Handler):
     def emit(self, record):
         if record.getMessage() == '<nl>':
+            # '<nl>' is a special value used to print new line after a command with ended without one
             click.echo('')
+            return
+        if not record.prev_nl:
+            # if the previous line ended without a newline we print the raw message with symbol or time etc.
+            # eg. for test output "........"
+            click.secho(record.getMessage(), fg=record.colour, nl=record.nl)
+            return
         log_entry = self.format(record)
         m = re.match('^.*?:\d\d ', log_entry)
         symbol = getattr(record, 'symbol')

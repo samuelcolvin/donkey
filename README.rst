@@ -8,6 +8,7 @@ Like `make`_ but for the 21st century.
 TODO:
 
 * combined commands - use "requires:" list, run could then be none
+* logging options, particularly to remove "pretty"
 * settings > environ
 * check command
 * "-c" option to use as shebang

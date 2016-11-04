@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from donkey.main import DonkeyError, DonkeyFailure, execute
@@ -150,3 +152,15 @@ async def test_multiple_failed_parallel(tmpworkdir):
         execute('foo', 'fails', parallel=True)
     assert excinfo.value.args == ('commands failed, return codes: 0, 123', 123)
     assert tmpworkdir.join('foo.txt').exists()
+
+
+async def test_logging_error(tmpworkdir):
+    mktree(tmpworkdir, {
+        'makefile.yml': 'foo:\n- echo hello\n',
+    })
+    with patch('donkey.main.locale.getpreferredencoding') as mock_getpreferredencoding:
+        error = RuntimeError('foobar')
+        mock_getpreferredencoding.side_effect = error
+        with pytest.raises(RuntimeError) as excinfo:
+            execute('foo')
+        assert excinfo.value == error

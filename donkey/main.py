@@ -79,6 +79,18 @@ STRUCTURE.allow_extra(
 )
 
 
+class SetException:
+    def __init__(self, future):
+        self._future = future
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val:
+            self._future.set_exception(exc_val)
+
+
 class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
     def __init__(self, exit_future, log_format):
         self.exit_future = exit_future
@@ -86,7 +98,7 @@ class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
         self.has_trailing_nl = True
 
     def pipe_data_received(self, fd, data):
-        # try:
+        with SetException(self.exit_future):
             s = data.decode(locale.getpreferredencoding(False))
             l = command_logger.info if fd == 1 else command_logger.warning
             extra = {
@@ -94,22 +106,22 @@ class DonkeySubprocessProtocol(asyncio.SubprocessProtocol):
                 'symbol': self.log_format['symbol'],
                 'colour': self.log_format['colour'],
                 'nl': True,
+                'prev_nl': self.has_trailing_nl,
             }
             *lines, last = s.split('\n')
             for line in lines:
                 self.has_trailing_nl = True
                 l('%s', line, extra=extra)
             if last:
-                self.has_trailing_nl = False
                 extra['nl'] = False
                 l('%s', last, extra=extra)
-        # except Exception as e:
-        #     self.exit_future.set_exception(e)
+                self.has_trailing_nl = False
 
     def process_exited(self):
-        self.exit_future.set_result(True)
-        if not self.has_trailing_nl:
-            command_logger.info('<nl>')
+        with SetException(self.exit_future):
+            if not self.has_trailing_nl:
+                command_logger.info('<nl>')
+            self.exit_future.set_result(True)
 
 
 def now():

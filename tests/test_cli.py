@@ -99,3 +99,26 @@ Running "fails"...
 TI:XX:ME 1: hello
 "fails" finished in 0.XXs, return code: 123
 Error: commands failed, return codes: 123\n""" == normalise_log(result.output, True)
+
+
+def test_dots(tmpworkdir):
+    mktree(tmpworkdir, {
+        'makefile.yaml': """
+print-dots:
+  interpreter: python
+  script: true
+  run:
+  - "import sys, time"
+  - "for i in range(5):"
+  - "    sys.stdout.write('.')"
+  - "    time.sleep(0.01)"
+  - "    sys.stdout.flush()"
+"""})
+    runner = CliRunner()
+    result = runner.invoke(cli, ['print-dots'])
+    print(result.output)
+    assert result.exit_code == 0
+    assert """\
+Running "print-dots"...
+TI:XX:ME 1: .....
+"print-dots" finished in 0.XXs, return code: 0\n""" == normalise_log(result.output, True)
