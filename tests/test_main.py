@@ -1,6 +1,6 @@
 import pytest
 
-from donkey.main import DonkeyError, execute
+from donkey.main import DonkeyError, DonkeyFailure, execute
 
 from .conftest import mktree
 
@@ -106,3 +106,47 @@ async def test_custom_file_name(tmpworkdir):
     })
     execute('foo', definition_file='different.yml')
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
+
+
+files = {
+    'makefile.yml': """
+foo:
+- "echo foovalue > foo.txt"
+fails:
+  interpreter: python
+  script: true
+  run:
+  - import sys
+  - sys.exit(123)
+"""}
+
+
+async def test_single_failed(tmpworkdir):
+    mktree(tmpworkdir, files)
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('fails')
+    assert excinfo.value.args == ('commands failed, return codes: 123', 123)
+
+
+async def test_multiple_failed1(tmpworkdir):
+    mktree(tmpworkdir, files)
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('fails', 'foo')
+    assert excinfo.value.args == ('commands failed, return codes: 123', 123)
+    assert not tmpworkdir.join('foo.txt').exists()
+
+
+async def test_multiple_failed2(tmpworkdir):
+    mktree(tmpworkdir, files)
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('foo', 'fails')
+    assert excinfo.value.args == ('commands failed, return codes: 0, 123', 123)
+    assert tmpworkdir.join('foo.txt').exists()
+
+
+async def test_multiple_failed_parallel(tmpworkdir):
+    mktree(tmpworkdir, files)
+    with pytest.raises(DonkeyFailure) as excinfo:
+        execute('foo', 'fails', parallel=True)
+    assert excinfo.value.args == ('commands failed, return codes: 0, 123', 123)
+    assert tmpworkdir.join('foo.txt').exists()

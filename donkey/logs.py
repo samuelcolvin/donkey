@@ -7,7 +7,7 @@ import click
 MAIN_LOG_FORMAT = {
     logging.DEBUG: {'fg': 'white', 'dim': True},
     logging.INFO: {'fg': 'white', 'dim': True},
-    logging.WARN: {'fg': 'yellow', 'dim': True},
+    logging.WARN: {'fg': 'yellow'},
 }
 
 

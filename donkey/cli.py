@@ -4,7 +4,7 @@ import sys
 import click
 
 from .logs import setup_logging
-from .main import DonkeyError, execute
+from .main import DonkeyError, DonkeyFailure, execute
 from .version import VERSION
 
 main_logger = logging.getLogger('donkey.main')
@@ -51,3 +51,6 @@ def cli(*, commands, verbose, **kwargs):
     except DonkeyError as e:
         main_logger.error('Error: %s', e)
         sys.exit(2)
+    except DonkeyFailure as e:
+        main_logger.warning('Error: %s', e.args[0])
+        sys.exit(e.args[1])

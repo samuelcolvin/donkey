@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import locale
 import logging
 import re
@@ -23,6 +24,10 @@ STD_FILE_NAMES = [
 
 
 class DonkeyError(Exception):
+    pass
+
+
+class DonkeyFailure(RuntimeError):
     pass
 
 
@@ -121,7 +126,7 @@ class CommandExecutor:
     def command_count(self):
         return 1 if self.parallel else len(self.subprocess_args_list)
 
-    def create_coros(self, track_multiple) -> list:
+    async def execute(self, track_multiple) -> list:
         coros = []
         for args in self.subprocess_args_list:
             if len(self.subprocess_args_list) == 1:
@@ -129,10 +134,14 @@ class CommandExecutor:
             else:
                 display_name = '{}: {}'.format(self.name, args[-1])
             coros.append(self._run(display_name, args, track_multiple))
+
         if self.parallel:
-            return [asyncio.gather(*coros, loop=self.loop)]
+            results = await asyncio.gather(*coros, loop=self.loop)
         else:
-            return coros
+            results = []
+            for coro in coros:
+                results.append(await coro)
+        return results
 
     async def _run(self, display_name: str, args: Tuple[str, ...], track_multiple: bool) -> int:
         log_format = get_log_format()
@@ -171,12 +180,19 @@ def loop_context():
     loop.close()
 
 
-async def run_coros(coros, parallel, *, loop):
+async def run_coros(executors, parallel, *, loop):
+    track_multiple = sum(ex.command_count() for ex in executors) > 1
+    coros = [ex.execute(track_multiple) for ex in executors]
     if parallel:
-        await asyncio.gather(*coros, loop=loop)
+        return_code_sets = await asyncio.gather(*coros, loop=loop)
     else:
+        return_code_sets = []
         for coro in coros:
-            await coro
+            return_codes = await coro
+            return_code_sets.append(return_codes)
+            if any(return_codes):
+                break
+    return list(itertools.chain(*return_code_sets))
 
 
 def execute(*commands: str, parallel: bool=None, args: str=None, definition_file: str=None):
@@ -221,9 +237,12 @@ def execute(*commands: str, parallel: bool=None, args: str=None, definition_file
                 interpreter=c.get('interpreter') or config.get('interpreter'),
                 script_mode=c.get('script_mode', config.get('script_mode', False)),
             ))
+        return_codes = loop.run_until_complete(run_coros(executors, parallel, loop=loop))
 
-        track_multiple = sum(ex.command_count() for ex in executors) > 1
-        coros = []
-        for command_executor in executors:
-            coros.extend(command_executor.create_coros(track_multiple))
-        loop.run_until_complete(run_coros(coros, parallel, loop=loop))
+    try:
+        failed_return_code = next(rt for rt in return_codes if rt != 0)
+    except StopIteration:
+        return 0
+    else:
+        codes_str = ', '.join(map(str, sorted(return_codes)))
+        raise DonkeyFailure('commands failed, return codes: {}'.format(codes_str), failed_return_code)

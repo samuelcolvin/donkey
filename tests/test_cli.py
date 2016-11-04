@@ -18,6 +18,14 @@ foo:
 - echo foo
 bar:
 - echo bar
+fails:
+  interpreter: python
+  script: true
+  run:
+  - import sys
+  - print('hello')
+  - sys.exit(123)
+  - print('good bye')
 """}
 
 
@@ -52,3 +60,16 @@ async def test_no_file(tmpworkdir):
     assert result.exit_code == 2
     assert result.output == ('Error: Unable to find definition file with standard name "donkey.yml" or "makefile.yml" '
                              'in the current working directory or any parent directory\n')
+
+
+async def test_failed_command(tmpworkdir):
+    mktree(tmpworkdir, files)
+    runner = CliRunner()
+    result = runner.invoke(cli, ['fails'])
+    assert result.exit_code == 123
+    print(result.output)
+    assert """\
+Running "fails"...
+TI:XX:ME (1) hello
+"fails" finished in 0.0Xs, return code: 123
+Error: commands failed, return codes: 123\n""" == normalise_log(result.output)
