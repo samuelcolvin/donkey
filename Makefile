@@ -13,11 +13,11 @@ isort:
 lint:
 	python setup.py check -rms
 	flake8 donkey/ tests/
-	pytest donkey --isort -p no:sugar -q --cache-clear
+	pytest donkey -p no:sugar -q --cache-clear
 
 .PHONY: test
 test:
-	py.test --cov=donkey --isort && coverage combine
+	py.test --cov=donkey && coverage combine
 
 .PHONY: testcov
 testcov:

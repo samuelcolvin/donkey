@@ -4,7 +4,8 @@ from donkey.main import execute
 
 from .conftest import mktree
 
-async def test_multiple(tmpworkdir, caplog):
+
+def test_multiple(tmpworkdir, caplog):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -28,7 +29,7 @@ spam:
     assert 'donkey.commands: spam' in log
 
 
-async def test_single_parallel(tmpworkdir, caplog):
+def test_single_parallel(tmpworkdir, caplog):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:

@@ -2,7 +2,7 @@ coverage
 docutils
 flake8
 pytest
-pytest-aiohttp
 pytest-cov
 pytest-isort
+pytest-mock
 pytest-sugar

@@ -1,12 +1,11 @@
-from unittest.mock import patch
-
 import pytest
 
 from donkey.main import DonkeyError, DonkeyFailure, execute
 
 from .conftest import mktree
 
-async def test_successful_command(tmpworkdir):
+
+def test_successful_command(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': 'foo:\n- "echo foovalue > foo.txt"\n',
     })
@@ -14,7 +13,7 @@ async def test_successful_command(tmpworkdir):
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
 
 
-async def test_script_mode(tmpworkdir):
+def test_script_mode(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """\
 foo:
@@ -27,7 +26,7 @@ foo:
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'hello world\n'
 
 
-async def test_arguments(tmpworkdir, caplog):
+def test_arguments(tmpworkdir, caplog):
     mktree(tmpworkdir, {
         'makefile.yml': """\
 foo:
@@ -40,7 +39,7 @@ donkey.commands: hello world
 donkey.main: "foo" finished in 0.0Xs, return codes: 0\n""" == caplog.normalised_log
 
 
-async def test_argument_in_script_mode(tmpworkdir):
+def test_argument_in_script_mode(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """\
 foo:
@@ -54,7 +53,7 @@ foo:
     assert not tmpworkdir.join('foo.txt').exists()
 
 
-async def test_default_command(tmpworkdir):
+def test_default_command(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -66,7 +65,7 @@ foo:
     assert tmpworkdir.join('foo.txt').read_text('utf8') == 'foovalue\n'
 
 
-async def test_no_default_command(tmpworkdir):
+def test_no_default_command(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -77,7 +76,7 @@ foo:
         execute()
 
 
-async def test_invalid_command(tmpworkdir):
+def test_invalid_command(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -88,7 +87,7 @@ foo:
         execute('missing')
 
 
-async def test_invalid_option(tmpworkdir):
+def test_invalid_option(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -101,7 +100,7 @@ foo:
         execute('missing')
 
 
-async def test_custom_file_name(tmpworkdir):
+def test_custom_file_name(tmpworkdir):
     mktree(tmpworkdir, {
         'different.yml': 'foo:\n- "echo foovalue > foo.txt"\n',
     })
@@ -122,14 +121,14 @@ fails:
 """}
 
 
-async def test_single_failed(tmpworkdir):
+def test_single_failed(tmpworkdir):
     mktree(tmpworkdir, files)
     with pytest.raises(DonkeyFailure) as excinfo:
         execute('fails')
     assert excinfo.value.args == ('commands failed, return codes: 123', 123)
 
 
-async def test_multiple_failed1(tmpworkdir):
+def test_multiple_failed1(tmpworkdir):
     mktree(tmpworkdir, files)
     with pytest.raises(DonkeyFailure) as excinfo:
         execute('fails', 'foo')
@@ -137,7 +136,7 @@ async def test_multiple_failed1(tmpworkdir):
     assert not tmpworkdir.join('foo.txt').exists()
 
 
-async def test_multiple_failed2(tmpworkdir):
+def test_multiple_failed2(tmpworkdir):
     mktree(tmpworkdir, files)
     with pytest.raises(DonkeyFailure) as excinfo:
         execute('foo', 'fails')
@@ -145,7 +144,7 @@ async def test_multiple_failed2(tmpworkdir):
     assert tmpworkdir.join('foo.txt').exists()
 
 
-async def test_multiple_failed_parallel(tmpworkdir):
+def test_multiple_failed_parallel(tmpworkdir):
     mktree(tmpworkdir, files)
     with pytest.raises(DonkeyFailure) as excinfo:
         execute('foo', 'fails', parallel=True)
@@ -153,19 +152,18 @@ async def test_multiple_failed_parallel(tmpworkdir):
     assert tmpworkdir.join('foo.txt').exists()
 
 
-async def test_logging_error(tmpworkdir):
+def test_logging_error(tmpworkdir, mocker):
     mktree(tmpworkdir, {
         'makefile.yml': 'foo:\n- echo hello\n',
     })
-    with patch('donkey.main.locale.getpreferredencoding') as mock_getpreferredencoding:
-        error = RuntimeError('foobar')
-        mock_getpreferredencoding.side_effect = error
-        with pytest.raises(RuntimeError) as excinfo:
-            execute('foo')
-        assert excinfo.value == error
+    mock_getpreferredencoding = mocker.patch('donkey.main.locale.getpreferredencoding')
+    mock_getpreferredencoding.side_effect = RuntimeError('foobar')
+    with pytest.raises(RuntimeError) as excinfo:
+        execute('foo')
+    assert excinfo.value.args[0] == 'foobar'
 
 
-async def test_break_on_fail(tmpworkdir):
+def test_break_on_fail(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
@@ -179,7 +177,7 @@ foo:
     assert not tmpworkdir.join('foo.txt').exists()
 
 
-async def test_break_on_fail_after(tmpworkdir):
+def test_break_on_fail_after(tmpworkdir):
     mktree(tmpworkdir, {
         'makefile.yml': """
 foo:
