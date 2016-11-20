@@ -43,6 +43,7 @@ class CommandLogHandler(logging.Handler):
         prefix = click.style(m.group(), fg='magenta')
         click.echo(prefix + msg, nl=record.nl)
 
+
 SYMBOLS = ['●', '◆', '▼', '◼', '◖', '◗', '◯', '◇', '▽', '□']
 COLOURS = ['green', 'cyan', 'blue', 'yellow']
 FORMATS = []
